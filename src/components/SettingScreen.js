@@ -10,39 +10,69 @@ export default function SettingsScreen({ onBudgetChange, onUserNameChange }) {
   const [budgetPeriod, setBudgetPeriod] = useState('daily');
   const [name, setName] = useState('');
   const [saved, setSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [showReset, setShowReset] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const b = getBudget();
-    if (b) {
-      setBudgetAmount(b.amount.toString());
-      setBudgetPeriod(b.period);
+    async function loadSettings() {
+      try {
+        const b = await getBudget();
+        if (b) {
+          setBudgetAmount(b.amount.toString());
+          setBudgetPeriod(b.period);
+        }
+        const u = await getUser();
+        if (u.name) setName(u.name);
+      } catch (err) {
+        console.error('Gagal memuat pengaturan:', err);
+      } finally {
+        setIsLoading(false);
+      }
     }
-    const u = getUser();
-    if (u.name) setName(u.name);
+    loadSettings();
   }, []);
 
-  const handleSave = () => {
-    const amount = parseFloat(budgetAmount);
-    if (amount > 0) {
-      const b = setBudget({ amount, period: budgetPeriod });
-      onBudgetChange(b);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const amount = parseFloat(budgetAmount);
+      if (amount > 0) {
+        const b = await setBudget({ amount, period: budgetPeriod });
+        onBudgetChange(b);
+      }
+      await setUser({ name: name.trim() });
+      onUserNameChange(name.trim());
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      console.error('Gagal menyimpan pengaturan:', err);
+    } finally {
+      setIsSaving(false);
     }
-    setUser({ name: name.trim() });
-    onUserNameChange(name.trim());
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
   };
 
-  const handleReset = () => {
-    resetAllData();
-    setBudgetAmount('');
-    setBudgetPeriod('daily');
-    setName('');
-    onBudgetChange(null);
-    onUserNameChange('');
-    setShowReset(false);
+  const handleReset = async () => {
+    try {
+      await resetAllData();
+      setBudgetAmount('');
+      setBudgetPeriod('daily');
+      setName('');
+      onBudgetChange(null);
+      onUserNameChange('');
+      setShowReset(false);
+    } catch (err) {
+      console.error('Gagal reset data:', err);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-8 h-8 border-2 border-coral-300 border-t-coral-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 space-y-4">
@@ -113,9 +143,10 @@ export default function SettingsScreen({ onBudgetChange, onUserNameChange }) {
       {/* Simpan */}
       <button
         onClick={handleSave}
-        className="w-full py-3.5 rounded-xl text-sm font-semibold bg-coral-500 text-white shadow-lg shadow-coral-200/50 active:scale-[0.98] transition-transform"
+        disabled={isSaving}
+        className="w-full py-3.5 rounded-xl text-sm font-semibold bg-coral-500 text-white shadow-lg shadow-coral-200/50 active:scale-[0.98] transition-transform disabled:opacity-70"
       >
-        {saved ? 'Tersimpan!' : 'Simpan Pengaturan'}
+        {isSaving ? 'Menyimpan...' : saved ? 'Tersimpan!' : 'Simpan Pengaturan'}
       </button>
 
       {/* Reset data */}
