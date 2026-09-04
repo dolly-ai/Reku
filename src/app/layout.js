@@ -13,7 +13,8 @@ export const metadata = {
   description: 'Catat uang jajan harianmu dengan gamifikasi streak & budget tracking',
   manifest: '/manifest.json',
   icons: {
-    icon: '/icon.svg',
+    icon: '/Logo.jpg',
+    apple: '/Logo.jpg',
   },
 };
 
