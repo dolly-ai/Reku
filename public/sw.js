@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ujt-v1';
+const CACHE_NAME = 'ujt-v2';
 
 self.addEventListener('install', () => {
   self.skipWaiting();
