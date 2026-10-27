@@ -12,7 +12,7 @@ const FILTERS = [
   { key: 'month', label: 'Bulan' },
 ];
 
-export default function TransactionList({ transactions, onDelete }) {
+export default function TransactionList({ transactions, onDelete, onError, userId }) {
   const [filter, setFilter] = useState('today');
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
@@ -44,10 +44,15 @@ export default function TransactionList({ transactions, onDelete }) {
   const totalExpense = filtered.filter(tx => tx.type === 'expense').reduce((s, tx) => s + tx.amount, 0);
   const totalIncome = filtered.filter(tx => tx.type === 'income').reduce((s, tx) => s + tx.amount, 0);
 
-  const handleDelete = (id) => {
-    const newList = deleteTransaction(id);
-    onDelete(newList);
-    setConfirmDeleteId(null);
+  const handleDelete = async (id) => {
+    try {
+      const deletedId = await deleteTransaction(userId, id);
+      onDelete(deletedId);
+      setConfirmDeleteId(null);
+    } catch (error) {
+      console.error('Gagal menghapus transaksi:', error);
+      onError('Transaksi gagal dihapus. Coba lagi.');
+    }
   };
 
   return (

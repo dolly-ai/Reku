@@ -7,7 +7,7 @@ import { addTransaction } from '@/lib/storage';
 
 const NUMPAD = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'del'];
 
-export default function AddTransaction({ onSave }) {
+export default function AddTransaction({ onSave, onError, userId }) {
   const [type, setType] = useState('expense');
   const [amount, setAmount] = useState('');
   const [categoryId, setCategoryId] = useState(null);
@@ -48,15 +48,20 @@ export default function AddTransaction({ onSave }) {
 
     setIsLoading(true);
     const tx = { type, amount: num, categoryId, description: description.trim(), date };
-    const newList = await addTransaction(tx);
-    onSave(newList, tx);
+    try {
+      const savedTransaction = await addTransaction(userId, tx);
+      onSave(savedTransaction, tx);
 
-    // Reset form
-    setAmount('');
-    setCategoryId(null);
-    setDescription('');
-    setDate(getTodayString());
-    setIsLoading(false);
+      setAmount('');
+      setCategoryId(null);
+      setDescription('');
+      setDate(getTodayString());
+    } catch (error) {
+      console.error('Gagal menyimpan transaksi:', error);
+      onError('Transaksi gagal disimpan. Coba lagi.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const canSave = parseFloat(amount) > 0 && categoryId && !isLoading;

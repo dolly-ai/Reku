@@ -1,5 +1,14 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
+## Supabase setup
+
+1. Configure `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local`.
+2. Run [`schema.sql`](./schema.sql) in the Supabase SQL Editor. It adds account ownership, transaction sync IDs, row-level security, and a migration path for existing device data.
+3. Enable Email authentication in Supabase Authentication settings. Configure the site's URL and allowed redirect URLs for account confirmation.
+4. Start the app and create an account. Sign in on each device with the same account to access synced transactions.
+
+After signing in once on a device, new transactions can be entered offline. They are stored in that account's local browser queue and automatically synced when the connection returns. Offline entries are not available on another device until they have synced. Initial sign-in and account creation require an internet connection.
+
 ## Getting Started
 
 First, run the development server:
