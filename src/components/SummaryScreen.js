@@ -8,19 +8,35 @@ export default function SummaryScreen({ transactions }) {
   const [period, setPeriod] = useState('week');
 
   const today = getTodayString();
+  const currentMonth = today.slice(0, 7);
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   let startDate = '';
+  let endDate = today;
   let periodLabel = '';
 
   if (period === 'week') {
     startDate = getWeekStart(today);
     periodLabel = 'Minggu Ini';
   } else {
-    startDate = getMonthStart(today);
-    periodLabel = 'Bulan Ini';
+    const monthDate = new Date(`${selectedMonth}-01T00:00:00`);
+    const lastDay = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+    startDate = getMonthStart(`${selectedMonth}-01`);
+    endDate = selectedMonth === currentMonth
+      ? today
+      : `${lastDay.getFullYear()}-${String(lastDay.getMonth() + 1).padStart(2, '0')}-${String(lastDay.getDate()).padStart(2, '0')}`;
+    periodLabel = selectedMonth === currentMonth
+      ? 'Bulan Ini'
+      : monthDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
   }
 
-  const filtered = transactions.filter(tx => tx.type === 'expense' && tx.date >= startDate && tx.date <= today);
+  const filtered = transactions.filter(tx => tx.type === 'expense' && tx.date >= startDate && tx.date <= endDate);
   const totalExpense = filtered.reduce((s, tx) => s + tx.amount, 0);
+
+  const changeMonth = (offset) => {
+    const monthDate = new Date(`${selectedMonth}-01T00:00:00`);
+    monthDate.setMonth(monthDate.getMonth() + offset);
+    setSelectedMonth(`${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`);
+  };
 
   // Kelompokkan per kategori
   const catMap = {};
@@ -69,7 +85,7 @@ export default function SummaryScreen({ transactions }) {
       <div className="flex gap-2">
         {[
           { key: 'week', label: 'Minggu Ini' },
-          { key: 'month', label: 'Bulan Ini' },
+          { key: 'month', label: 'Bulanan' },
         ].map(p => (
           <button
             key={p.key}
@@ -82,6 +98,33 @@ export default function SummaryScreen({ transactions }) {
           </button>
         ))}
       </div>
+
+      {period === 'month' && (
+        <div className="flex items-center justify-between bg-white rounded-xl px-2 py-1 shadow-sm">
+          <button
+            type="button"
+            onClick={() => changeMonth(-1)}
+            aria-label="Lihat bulan sebelumnya"
+            className="p-2 text-gray-500 hover:text-coral-500 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <p className="text-sm font-medium text-gray-700">{periodLabel}</p>
+          <button
+            type="button"
+            onClick={() => changeMonth(1)}
+            aria-label="Lihat bulan berikutnya"
+            disabled={selectedMonth >= currentMonth}
+            className="p-2 text-gray-500 hover:text-coral-500 transition-colors disabled:text-gray-200 disabled:cursor-not-allowed"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Total pengeluaran */}
       <div className="bg-white rounded-2xl p-5 shadow-sm">
